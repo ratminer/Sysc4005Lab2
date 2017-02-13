@@ -13,7 +13,9 @@ public class mySystem {
 	private ArrayList<Double> IATimes;
 	private double[] departureTime;
 	private int[] totalNumberinServer;
-	private double[] waitingTime;
+	private long waitingTime;
+	private int PartBdelay;
+	private ArrayList<Event> eventCaptured;
 
 
 	public mySystem() {
@@ -23,9 +25,11 @@ public class mySystem {
 		this.clock = 0;
 		this.qSize =0;
 		this.departures=0;
-		this.departureTime= new double[100000] ;
-		this.totalNumberinServer= new int[100000];
-		this.waitingTime= new double[10];
+		this.departureTime= new double[MAX_DEPARTURES] ;
+		this.totalNumberinServer= new int[MAX_DEPARTURES];
+		this.waitingTime=0;
+		this.PartBdelay=0;
+		this.eventCaptured= new ArrayList<>();
 		}
 
 	public void run(){
@@ -34,6 +38,7 @@ public class mySystem {
 			Event e = eventList.get(0); // take the first
 			//"future event"
 			clock = e.getTime(); // progress clock
+			e.setWaiting(System.nanoTime());
 			/* more code to be added here */
 			if(e.getType().equals("arrival")){ // if the event is an
 				//arrival
@@ -67,7 +72,23 @@ public class mySystem {
 				}
 			}
 			else if (e.getType().equals("departure")){
+				
+				// experimental 
 				departureTime[departures]= e.getTime();
+				
+				//trying to capture when t= 500 , 1000, 10000
+				if(e.getTime() == 500.00|| e.getTime() == 1000.00 | e.getTime()== 10000.00)
+				{
+					
+					eventCaptured.add(e);
+				}
+				long rightnow= System.nanoTime();
+				long delayed = rightnow-e.getDelayTime(); 
+				if((delayed)>= 0.3){
+					PartBdelay++;
+				}
+				
+				// experimental section over
 				qSize--;
 				totalNumberinServer[departures] = qSize;
 				departures++;
@@ -108,6 +129,7 @@ public class mySystem {
 		//customer is set to 0
 		IATimes.remove(0);
 		eventList.add(e);
+
 	}
 
 	public static void main(String args[]){
@@ -116,7 +138,7 @@ public class mySystem {
 		int[] aTime = null;
 
 		m.run();
-		m.histogram();
+		m.results();
 		m.findPacketDelay();
 	}
 	
@@ -124,16 +146,16 @@ public class mySystem {
 	{
 		
 	}
-	public void histogram()
+	public void results()
 	{
 		/* Declare array and assign values  {19, 3, 15, 7, 11, 9, 13, 5, 17, 1};*/
 		int array[] = totalNumberinServer;
-
 		String output = "Time\t Number of Packets \tHistogram";
 
 		/* Format histogram */
 		// For each array element, output a bar in histogram
 		for ( int counter = 0; counter <= array.length; counter++ ) {
+			
 			if(counter!=array.length)
 			{
 			output += "\n" + departureTime[counter] + "\t" + array[ counter ] + "\t";
@@ -144,13 +166,25 @@ public class mySystem {
 			}
 			}else
 			{
-				output += "\n" + counter + "\t" + "0" +"\t";
+				output += "\n" + counter + "\t" +"part b total packets stayed in the system more than .3 second is "+ this.PartBdelay +" with porbability of "+calculateProbabilityB()+"\n";
+				calculateC();
 			}
 		}
 
 		/* Print histogram */
 		System.out.println(output);
 	}
+	private String calculateProbabilityB() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private String calculateC() {
+		// TODO Auto-generated method stub
+		return eventCaptured.get(0).getType()+"\t event Time: "+ eventCaptured.get(0).getTime()+ "\n"
+				+ eventCaptured.get(1).getType()+ "\t event Time: "+ eventCaptured.get(1).getTime()+"\n"
+				+eventCaptured.get(2).getType()+ "\t event Time:" + eventCaptured.get(2).getTime()+"\n";}
+
 	public double getIATime(){
 		if(IATimes.isEmpty())
 			return -1; // if there are no more arrivals return -1
