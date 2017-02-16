@@ -1,6 +1,7 @@
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 public class mySystem {
 
@@ -16,6 +17,8 @@ public class mySystem {
 	private long waitingTime;
 	private int PartBdelay;
 	private ArrayList<Event> eventCaptured;
+	private HashMap<Integer,Integer> hmapServerQue;
+	private ArrayList<mySystem> systemCapture;
 
 
 	public mySystem() {
@@ -30,6 +33,9 @@ public class mySystem {
 		this.waitingTime=0;
 		this.PartBdelay=0;
 		this.eventCaptured= new ArrayList<>();
+		hmapServerQue= new HashMap<>();
+		systemCapture = new ArrayList<>();
+		
 		}
 
 	public void run(){
@@ -43,6 +49,7 @@ public class mySystem {
 			if(e.getType().equals("arrival")){ // if the event is an
 				//arrival
 				qSize++;
+
 				if(!server.isBusy()){ // if server is idle
 					server.setBusy(true); //set server busy
 					Event ev = new Event("departure",
@@ -75,22 +82,28 @@ public class mySystem {
 				
 				// experimental 
 				departureTime[departures]= e.getTime();
-				
-				//trying to capture when t= 500 , 1000, 10000
-				if(e.getTime() == 500.00|| e.getTime() == 1000.00 | e.getTime()== 10000.00)
-				{
-					
-					eventCaptured.add(e);
-				}
+
 				long rightnow= System.nanoTime();
 				long delayed = rightnow-e.getDelayTime(); 
 				if((delayed)>= 0.3){
 					PartBdelay++;
 				}
 				
+				// deal with hashmap
+				if(hmapServerQue.containsKey(qSize))
+				{
+					int value = hmapServerQue.get(qSize)+1;
+					hmapServerQue.put(qSize, value);
+				}else
+				{
+					hmapServerQue.put(qSize,1);
+				}
+				
+				totalNumberinServer[departures] = qSize;
+				
 				// experimental section over
 				qSize--;
-				totalNumberinServer[departures] = qSize;
+				
 				departures++;
 				if(departures == MAX_DEPARTURES){
 					stop();
@@ -153,7 +166,8 @@ public class mySystem {
 		String output = "Time\t Number of Packets \tHistogram";
 
 		/* Format histogram */
-		// For each array element, output a bar in histogram
+		// For each array element, output a bar in histogram.
+		/*
 		for ( int counter = 0; counter <= array.length; counter++ ) {
 			
 			if(counter!=array.length)
@@ -169,10 +183,21 @@ public class mySystem {
 				output += "\n" + counter + "\t" +"part b total packets stayed in the system more than .3 second is "+ this.PartBdelay +" with porbability of "+calculateProbabilityB()+"\n";
 				calculateC();
 			}
-		}
+			
+		}*/
 
 		/* Print histogram */
-		System.out.println(output);
+		/*
+		Set set2 = hmapServerQue.entrySet();
+	      Iterator iterator2 = set2.iterator();
+	      while(iterator2.hasNext()) {
+	          Map.Entry mentry2 = (Map.Entry)iterator2.next();
+	          System.out.print("Key is: "+mentry2.getKey() + " & Value is: ");
+	          System.out.println(mentry2.getValue());
+	       }
+	       */
+		
+		System.out.println(hmapServerQue+" the part B dealy is:"+ PartBdelay);
 	}
 	private String calculateProbabilityB() {
 		// TODO Auto-generated method stub
@@ -223,5 +248,22 @@ public class mySystem {
 
 		scaS.close();
 		scaIA.close();
+	}
+	
+	public void PartCthread()
+	{
+		Thread one = new Thread() {
+		    public void run() {
+		        try {
+		            System.out.println("Does it work?");
+		            Thread.sleep(500);
+		            
+		        } catch(InterruptedException v) {
+		            System.out.println(v);
+		        }
+		    }  
+		};
+
+		one.start();
 	}
 }
